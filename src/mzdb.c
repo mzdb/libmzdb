@@ -7,7 +7,16 @@
 #include "queries.h"
 #include "mzdb.h"
 
+int openMzDbFile(
+  const char *filename,   /* Database filename (UTF-8) */
+  sqlite3 **ppDb          /* OUT: SQLite db handle */
+) {
+  return sqlite3_open(filename, ppDb);
+}
 
+int closeMzDbFile(sqlite3* ppDb) {
+  return sqlite3_close(ppDb);
+}
 
 void freeSpectrumHeader(SpectrumHeader *spectrumHeaderPtr)
 {
@@ -31,13 +40,6 @@ void freeSpectrumHeader(SpectrumHeader *spectrumHeaderPtr)
 
   if (spectrumHeaderPtr->productList != NULL)
     free(spectrumHeaderPtr->productList);
-}
-
-static void getIntCb(sqlite3_stmt* stmt, int index, long sizeInBytes, void* cbRes)
-{
-  int test = sqlite3_column_int(stmt, index);
-
-  *((int*)cbRes) = test;
 }
 
 /* get one spectrum header from a n SQL statement */
@@ -117,8 +119,6 @@ int getSpectrumHeaders(
   int stmtStepRc;   // step result state
   int spectrumIndex;
   int spectrumCount;
-
-
 
   const char *sqlString = "SELECT * FROM spectrum";
 

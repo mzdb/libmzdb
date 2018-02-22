@@ -3,6 +3,10 @@
 
 #include "lib/xmlbare/parser.h"
 
+void xmlBrowse( nodecPtr root, void (*callback)(nodecPtr, int, void *), void *);
+char *getAttributeValue(nodecPtr node, char *attributeName);
+float getAttributeValueAsFloat(nodecPtr node, char *attributeName);
+
 void _addBrothersRec(nodecPtr **children, nodecPtr node, int nbChildren);
 
 nodecPtr* getChildren(nodecPtr node);

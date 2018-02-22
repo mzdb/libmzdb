@@ -26,8 +26,6 @@ int executeSelectNStmt(
   char **errMsg
   );
 
-
-
 int executeSelectStmt(
   sqlite3 *db,
   const char *sql,

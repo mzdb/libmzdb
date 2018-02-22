@@ -68,6 +68,4 @@ struct parserc {
 
 int parserc_parse( struct parserc *self, char *newbuf );
 int parserc_parse_unsafely( struct parserc *self, char *newbuf );
-void xmlBrowse( nodecPtr root, void (*callback)(nodecPtr, int, void *), void *);
-char *getAttributeValue(nodecPtr node, char *attributeName);
-float getAttributeValueAsFloat(nodecPtr node, char *attributeName);
+

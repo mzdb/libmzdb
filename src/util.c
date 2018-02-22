@@ -1,23 +1,32 @@
-#include "util.h"
+#include <stdarg.h>       // va_*
 #include <stdio.h>
 #include <stdlib.h>       // calloc
-#include <stdarg.h>       // va_*
 #include <string.h>       // strlen, strcpy
-#include "lib/sqlite/sqlite3.h"
+
+#include "util.h"
+
+/**
+ * `asprintf.c' - asprintf
+ *
+ * Source: https://github.com/littlstar/asprintf.c/blob/master/asprintf.c
+ *
+ * copyright (c) 2014 joseph werle <joseph.werle@gmail.com>
+ */
+
 
 // Source: http://stackoverflow.com/questions/8465006/how-to-concatenate-2-strings-in-c
-char* concat(int count, ...)
+const char* concat(int count, ...)
 {
   va_list ap;
   int i;
   int len;
-  char *merged;
+  const char *merged;
   int null_pos;
 
   if (count > MAX_CONCAT_STR_COUNT)
     {
-      printf("Too many strings to concat\n");
-      exit(EXIT_FAILURE);
+      fputs("concat (util.c): too many strings to concat !", stderr);
+      return NULL;
     }
 
   // Find required length to store merged string
@@ -30,7 +39,7 @@ char* concat(int count, ...)
   va_end(ap);
 
   // Allocate memory to concat strings
-  merged = (char*)calloc(sizeof(char), len);
+  merged = (const char*)calloc(sizeof(char), len);
   null_pos = 0;
 
   // Actually concatenate strings
@@ -52,6 +61,7 @@ char *chngChar(char *str, char oldChar, char newChar)
 
   while ((strPtr = strchr(strPtr, oldChar)) != NULL)
     *strPtr++ = newChar;
+
   return str;
 }
 
