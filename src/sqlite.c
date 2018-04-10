@@ -191,8 +191,8 @@ void getFloatCb(sqlite3_stmt* stmt, int index, long sizeInBytes, void* cbRes)
 
   if (d > FLT_MAX)
     {
-      printf("!!! Floating.overflow !!!");
-      exit(-1);
+      printf("libmzdb error: floating overflow !");
+      exit(EXIT_FAILURE);
     }
   *((float*)cbRes) = (float)d;
 }
@@ -204,6 +204,12 @@ void getIntCb(sqlite3_stmt* stmt, int index, long sizeInBytes, void* cbRes)
 
   *((int*)cbRes) = test;
 }
+/*static void getIntCb(sqlite3_stmt* stmt, int index, long sizeInBytes, void* cbRes)
+{
+  int test = sqlite3_column_int(stmt, index);
+
+  *((int*)cbRes) = test;
+}*/
 
 void getNIntCb(sqlite3_stmt* stmt, int index, long sizeInBytes, void* cbRes)
 {

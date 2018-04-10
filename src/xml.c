@@ -1,10 +1,64 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <float.h>
-#include "xml.h"
-#include "models.h"
 
+#include "asprintf.h"
+#include "log.h"
+#include "models.h"
+#include "xml.h"
+
+/** recursive xml traversal with callback on all nodes */
+static void xmlBrowseRec( nodecPtr node, int level, void (*callback)(nodecPtr node, int level, void *), void *userParam) {
+//    printf("browse node %.*s\n", node->namelen, node->name);   fflush(stdout);
+
+    if ( node && callback ) callback( node, level, userParam);
+    if ( node->next ) {
+        xmlBrowseRec( node->next, level, callback, userParam);
+    }
+    if ( node->numchildren) {
+        xmlBrowseRec(node->firstchild,level+1, callback, userParam);
+    }
+}
+
+/** xml trversal with callback on all nodes */
+void xmlBrowse( nodecPtr root, void (*callback)(nodecPtr, int, void *), void *userParam) {
+    if ( !root ) return;
+    xmlBrowseRec( root, 0, callback, userParam);
+}
+
+/** get the attribute value matching attributeName */
+static int getAttributeValueRec(attcPtr attribute, char *attributeName, char attributeValue[2048]) {
+    if ( !attribute) return 0;
+
+    if ( !strncmp(attributeName, attribute->name, attribute->namelen) ) {
+        strncpy(attributeValue,attribute->value, attribute->vallen);
+        attributeValue[attribute->vallen] = 0;
+        return 1;
+    }
+    return getAttributeValueRec(attribute->next, attributeName, attributeValue);
+}
+
+/** get the attribute value matching attributeName. Static char returned: Do not need to free memory */
+char *getAttributeValue(nodecPtr node, char *attributeName) {
+    static char attributeValue[2048];
+    if ( !node ) return NULL;
+    if ( !node->firstatt )  return NULL;
+    if ( getAttributeValueRec(node->firstatt, attributeName, attributeValue) ) return attributeValue;
+    return NULL;
+}
+
+/** get the attribute value matching attributeName as float */
+//TODO: gestion d'erreurs ...
+float getAttributeValueAsFloat(nodecPtr node, char *attributeName) {
+    char *attributeValue = getAttributeValue(node, attributeName);
+    if (attributeValue) return atof( attributeValue );
+}
+
+int getAttributeAsInt(nodecPtr node, char *attributeName){
+    char *attributeValue = getAttributeValue(node, attributeName);
+    if(attributeValue) return atoi( attributeValue );
+}
 
 /* fill the children array */
 void _addBrothersRec(nodecPtr **children, nodecPtr node, int nbChildren)
@@ -159,13 +213,14 @@ nodecPtr xmlParse(char* text)
 {
   struct parserc *parser = (struct parserc *)calloc(1, sizeof(struct parserc));
   nodecPtr root = NULL;
-  int err;
+  int errCode;
 
-  err = parserc_parse(parser, text);
+  errCode = parserc_parse(parser, text);
   //TODO: Check error code
   if (parser == NULL)
     {
-      printf("error encountered on parser : %d\n", err);
+      _logf(LOG_ERROR,"something wrong happened (error code=%d) while parsing XML chunk '%s'", errCode, text);
+
       return NULL;
     }
 

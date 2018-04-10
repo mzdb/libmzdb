@@ -85,7 +85,11 @@ int getParamTreeSpectrum(
 
   printf("SQL: %s \n", sqlString);
 
-  return executeSelectStmt(db, sqlString, 0, &getStringCb, paramTreeSpectrum, errMsg);
+  int rc = executeSelectStmt(db, sqlString, 0, &getStringCb, paramTreeSpectrum, errMsg);
+
+  sqlite3_free(sqlString);
+
+  return rc;
 }
 
 //Only return the paramTreeSpectrum from the previous statement
@@ -241,12 +245,12 @@ int getMaxMsLevelOrDie(
 int getBoundingBoxesCountFromSequence(
   sqlite3 *db,
   int *bbCount,
-  char *errMsg
+  char **errMsg
   )
 {
   int rc = 0;
 
-  rc = getTableRecordsCount(db, "bounding_box", bbCount, &errMsg);
+  rc = getTableRecordsCount(db, "bounding_box", bbCount, errMsg);
   //printf("Bounding Boxes Table Records Count: %d\n\n",i);
 
   return rc;
@@ -272,33 +276,53 @@ int getBoundingBoxesCountFromSequenceOrDie(
 int getMzRange(
   sqlite3 *db,
   int msLevel,
-  int *minMaxMz,
+  int **minMaxMz,
   char **errMsg
   )
 {
+
+  int minMz = 0;
   int maxMz = 0;
   char *zSQL = sqlite3_mprintf("SELECT min(begin_mz), max(end_mz) FROM run_slice WHERE ms_level=%d", msLevel);
-  int minMz = executeSelectStmt(db, zSQL, 0, &getIntCb, minMaxMz, errMsg);
+  int minMzRC = executeSelectStmt(db, zSQL, 0, &getIntCb, &minMz, errMsg);
+  if (minMzRC != SQLITE_OK) {
+      sqlite3_free(zSQL);
+      return minMzRC;
+  }
 
-  printf("Valeur De Mz Minimale : %d\n", *minMaxMz);
-  maxMz = executeSelectStmt(db, zSQL, 1, &getIntCb, minMaxMz, errMsg);
-  printf("Valeur De Mz Maximale : %d\n\n", *minMaxMz);
+  printf("Valeur De Mz Minimale : %d\n", minMz);
+  int maxMzRC = executeSelectStmt(db, zSQL, 1, &getIntCb, &maxMz, errMsg);
+  printf("Valeur De Mz Maximale : %d\n\n", maxMz);
+
   sqlite3_free(zSQL);
-  return 0;
+
+  static int mzRange[2];
+  mzRange[0] = minMz;
+  mzRange[1] = maxMz;
+
+  minMaxMz = &mzRange;
+
+  return maxMzRC;
 }
 
-//Only return the mz Range from the previous statement
-void getMzRangeOrDie(
+//FIXME: check that we return a usable array
+int *getMzRangeOrDie(
   sqlite3 *db,
   int msLevel
   )
 {
-  int minMaxMz;
+  int *minMaxMz = NULL;
   char *errMsg = NULL;
 
   int rc = getMzRange(db, msLevel, &minMaxMz, &errMsg);
 
   dieOnSqliteError(rc, errMsg);
+
+  //int maxMz = minMaxMz[1];
+
+  //printf("Valeur De Mz Maximale from getMzRangeOrDie : %d\n\n", maxMz);
+
+  return minMaxMz;
 }
 
 //Return the whole statement to find the BoundingBoxesCount from bounding_box table where the id is given by the user
@@ -402,12 +426,12 @@ int getDataEncodingsCountFromSequenceOrDie(
 int getSpectraCountFromSequence(
   sqlite3 *db,
   int *spectraCount,
-  char *errMsg
+  char **errMsg
   )
 {
   int rc = 0;
 
-  rc = getTableRecordsCount(db, "spectrum", spectraCount, &errMsg);
+  rc = getTableRecordsCount(db, "spectrum", spectraCount, errMsg);
 
   return rc;
 }
@@ -599,6 +623,7 @@ DisplaySpectraContentPtr getDisplaySpectraContent(sqlite3 *db, int dataEncodingI
   printf("intensityPrecision : %d\n", intensityPrecision);
 
   sqlite3_free(sqlStringEncoding);
+
   if (!strcmp(mode, "centroid") && !strcmp(compression, "none") && !strcmp(byteOrder, "little_endian") && mzPrecision == 32 && intensityPrecision == 32)
     return displaySpectraContent32_32;
   if (!strcmp(mode, "centroid") && !strcmp(compression, "none") && !strcmp(byteOrder, "little_endian") && mzPrecision == 64 && intensityPrecision == 32)
@@ -628,7 +653,9 @@ int getChromatogramDataPoints
 
   zSQL = sqlite3_mprintf("SELECT data_points FROM chromatogram WHERE chromatogram.id = %d\n\n", cId);
   rc = executeSelectNStmt(db, zSQL, 0, &getBlobCb, blobSize, data, errMsg);
+
   sqlite3_free(zSQL);
+
   return rc;
 }
 
@@ -799,6 +826,7 @@ int getMsLevelFromRunSliceIdManually
   int rc = executeSelectStmt(db, zSQL, 0, &getIntCb, msLevel, errMsg);
 
   sqlite3_free(zSQL);
+
   return rc;
 }
 
@@ -828,14 +856,17 @@ int getBoundingBoxMsLevel(
 {
   int *firstResult = 0;
   int rc = 0;
-  char *zSQLBis;
+
   char *zSQL = sqlite3_mprintf("SELECT run_slice_id FROM bounding_box WHERE id = %d", bbId);
 
   rc = executeSelectStmt(db, zSQL, 0, &getIntCb, &firstResult, errMsg);
   printf("L'id de run_slice recherche est : %d\n\n", firstResult);
-  zSQLBis = sqlite3_mprintf("SELECT ms_level FROM run_slice WHERE run_slice.id = %d", firstResult);
-  rc = executeSelectStmt(db, zSQLBis, 0, &getIntCb, resultMsLevel, errMsg);
+
+  zSQL = sqlite3_mprintf("SELECT ms_level FROM run_slice WHERE run_slice.id = %d", firstResult);
+  rc = executeSelectStmt(db, zSQL, 0, &getIntCb, resultMsLevel, errMsg);
   printf("Et voila son indice ms associe : %d\n\n", *resultMsLevel);
+
+  sqlite3_free(zSQL);
 
   return 0;
 }
@@ -856,6 +887,40 @@ int getBoundingBoxMsLevelOrDie(
 
   return resultMsLevel;
 }
+
+//get the data_encoding id from spectrum where the bounding box ID is given by the user
+int getDataEncodingId
+(
+  sqlite3 *db,
+  int boundingBoxId,
+  int *dataEncodingId,
+  char **errMsg
+)
+{
+  char *sqlStringEncodingId = sqlite3_mprintf("SELECT s.data_encoding_id FROM spectrum s, bounding_box b WHERE b.id = %d AND b.first_spectrum_id = s.id", boundingBoxId);
+  int rc = executeSelectStmt(db, sqlStringEncodingId, 0, &getIntCb, dataEncodingId, errMsg);
+
+  sqlite3_free(sqlStringEncodingId);
+  return rc;
+}
+
+//Only return the Data Encoding ID from the previous statement
+int getDataEncodingIdOrDie
+(
+  sqlite3 *db,
+  int boundingBoxId
+)
+{
+  int dataEncodingId;
+  char *errMsg = NULL;
+
+  int rc = getDataEncodingId(db, boundingBoxId, &dataEncodingId, &errMsg);
+
+  dieOnSqliteError(rc, errMsg);
+
+  return dataEncodingId;
+}
+
 
 /* Callback for getAllFromBoundingBox. Specific to 64_32 peaks */
 void fillPeaks64_32Callback(byte *blob, SpectrumData *spectrumData)
@@ -1004,40 +1069,6 @@ FillPeaksCallbackPtr getFillPeaksCallback(DataPrecision dataPrecision)
     }
   return NULL;
 }
-
-//get the data_encoding id from spectrum where the bounding box ID is given by the user
-int getDataEncodingId
-(
-  sqlite3 *db,
-  int boundingBoxId,
-  int *dataEncodingId,
-  char **errMsg
-)
-{
-  char *sqlStringEncodingId = sqlite3_mprintf("SELECT s.data_encoding_id FROM spectrum s, bounding_box b WHERE b.id = %d AND b.first_spectrum_id = s.id", boundingBoxId);
-  int rc = executeSelectStmt(db, sqlStringEncodingId, 0, &getIntCb, dataEncodingId, errMsg);
-
-  sqlite3_free(sqlStringEncodingId);
-  return rc;
-}
-
-//Only return the Data Encoding ID from the previous statement
-int getDataEncodingIdOrDie
-(
-  sqlite3 *db,
-  int boundingBoxId
-)
-{
-  int dataEncodingId;
-  char *errMsg = NULL;
-
-  int rc = getDataEncodingId(db, boundingBoxId, &dataEncodingId, &errMsg);
-
-  dieOnSqliteError(rc, errMsg);
-
-  return dataEncodingId;
-}
-
 
 //get x value from SpectrumData depending of its DATA_PRECISION
 double getXValue(SpectrumData spectrumData, int index)
@@ -1289,6 +1320,9 @@ int getSpectrumSlicesInRange(
   printf("SQL: %s \n", sqlString);
 
   rc = sqlite3_prepare_v2(db, sqlString, -1, &stmt, NULL);
+
+  sqlite3_free(sqlString);
+
   if (rc != SQLITE_OK)
     {
       printf("erreur rencontrée : %s", errMsg);
@@ -1388,7 +1422,9 @@ int getSpectrumSlicesInRange(
       sqlite3_finalize(stmt);
       return stmtStepRc;
     }
+
   sqlite3_finalize(stmt);
+
   return SQLITE_OK;
 }
 

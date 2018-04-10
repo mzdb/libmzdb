@@ -1,28 +1,17 @@
+#include <float.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
-#include <float.h>
 #include <time.h>
-#include "lib/sqlite/sqlite3.h"
-#include "tables.h"
-#include "util.h"
-#include "queries.h"
+
+#include "log.h"
 #include "models.h"
 #include "mzdb.h"
-#include "xml.h"
+#include "tables.h"
+#include "queries.h"
 #include "util.h"
-/*
-   char *chngChar (char *str, char oldChar, char newChar) {
-    char *strPtr = str;
-    while ((strPtr = strchr (strPtr, oldChar)) != NULL)
- * strPtr++ = newChar;
-    return str;
-   }
-
-
-   char *sqlString = "SELECT count(*) FROM bounding_box WHERE bounding_box.run_slice_id = ?";
-   printf ("%s\n", chngChar(sqlString, '?', '3'));
- */
+#include "xml.h"
+#include "lib/sqlite/sqlite3.h"
 
 int testSlices(sqlite3 *db, char **errMsg)
 {
@@ -30,20 +19,18 @@ int testSlices(sqlite3 *db, char **errMsg)
   SpectrumSlice *spectrumSlices;
   SpectrumSlice *spectrumSlicePtr;
   int nbSpectrumSlices;
-  //int indice = 0;
   int nPeak;
   int rc;
   int spectrumSliceIdx;
 
-
   rc = getParamTreeMzdb(db, &mzdbParamTree, errMsg);
   if (rc != SQLITE_OK)
     {
-      printf("An error occured trying to return param tree: '%s'\n", errMsg);
-      exit(2);
+      errMsg = concat(2,"An error occured while trying to load the param tree: ",errMsg);
+      return rc;
     }
 
-  printf("Spectrum Slices bf %X\n", &spectrumSlices); fflush(stdout);
+  _logf(LOG_DEBUG,"Spectrum Slices bf %X\n", &spectrumSlices);
 
   rc = getSpectrumSlicesInRange(
     db,
@@ -53,19 +40,19 @@ int testSlices(sqlite3 *db, char **errMsg)
     &nbSpectrumSlices,
     errMsg
     );
-  printf("Spectrum Slices af %X\n", &spectrumSlices); fflush(stdout);
+  _logf(LOG_DEBUG,"Spectrum Slices af %X\n", &spectrumSlices);
 
   if (rc != SQLITE_OK)
     {
-      printf("An error occured trying to return param tree: '%s'\n", errMsg);
-      exit(2);
+      errMsg = concat(2,"An error occured while trying to load the spectrum slices: ",errMsg);
+      return rc;
     }
   else
     {
       spectrumSlicePtr = spectrumSlices;
 
-      printf("Nb Spectrum Slices %d\n", nbSpectrumSlices); fflush(stdout);
-      printf("Spectrum Slices %X\n", spectrumSlices); fflush(stdout);
+      _logf(LOG_DEBUG,"Nb Spectrum Slices %d\n", nbSpectrumSlices);
+      _logf(LOG_DEBUG,"Spectrum Slices %X\n", spectrumSlices);
 
       for (spectrumSliceIdx = 0; spectrumSliceIdx < nbSpectrumSlices; spectrumSliceIdx++)
         {
@@ -77,28 +64,24 @@ int testSlices(sqlite3 *db, char **errMsg)
           //fflush(stdout);
           if (spectrumSlicePtr->spectrum.data.nbPeaks > 0)
             {
-              printf("Run Slice Id %d\n", spectrumSlicePtr->runSliceId);
+              _logf(LOG_DEBUG,"Run Slice Id %d\n", spectrumSlicePtr->runSliceId);
               //printf("indice : %d\n", indice);
-              printf("spectrum data nbPeak %d\n", spectrumSlicePtr->spectrum.data.nbPeaks);
-
+              _logf(LOG_DEBUG,"spectrum data nbPeak %d\n", spectrumSlicePtr->spectrum.data.nbPeaks);
 
               for (nPeak = 0; nPeak < spectrumSlicePtr->spectrum.data.nbPeaks; nPeak++)
                 {
                   double mz = getXValue(spectrumSlicePtr->spectrum.data, nPeak);
                   double rt = getYValue(spectrumSlicePtr->spectrum.data, nPeak);
-                  printf("Data peaks #%d : %f %f\n", nPeak, mz, rt);
+                  _logf(LOG_DEBUG,"Data peaks #%d : %f %f\n", nPeak, mz, rt);
                 }
             }
           spectrumSlicePtr++;
           //indice++;
         }
     }
-
-
 //    free(spectrumSlices);
 
-
-  return SQLITE_OK;
+  return rc;
 }
 
 int testParamTrees(sqlite3 *db, char **errMsg)
@@ -135,14 +118,16 @@ int testParamTrees(sqlite3 *db, char **errMsg)
   rc = getParamTreeMzdb(db, &mzdbParamTree, errMsg);
   if (rc != SQLITE_OK)
     {
-      printf("An error occured trying to return param tree: '%s'\n", errMsg);
-      exit(2);
+      errMsg = concat(2,"An error occured while trying to load the param tree: ",errMsg);
+      return rc;
     }
 
-  printf("mzdbParamTree.ms1BbMzWidth = %f , mzdbParamTree.ms1BbTimeWidth = %f\n", mzdbParamTree.ms1BbMzWidth, mzdbParamTree.ms1BbTimeWidth);
-  printf("mzdbParamTree.msnBbMzWidth = %f, mzdbParamTree.msnBbTimeWidth = %f\n", mzdbParamTree.msnBbMzWidth, mzdbParamTree.msnBbTimeWidth);
-  printf("mzdbParamTree.isLossLess = %d\n", mzdbParamTree.isLossless);
-  printf("mzdbParamTree.originFileFormat = %s\n", mzdbParamTree.originFileFormat);
+  _logf(LOG_DEBUG,"mzdbParamTree.ms1BbMzWidth = %f , mzdbParamTree.ms1BbTimeWidth = %f\n", mzdbParamTree.ms1BbMzWidth, mzdbParamTree.ms1BbTimeWidth);
+  _logf(LOG_DEBUG,"mzdbParamTree.msnBbMzWidth = %f, mzdbParamTree.msnBbTimeWidth = %f\n", mzdbParamTree.msnBbMzWidth, mzdbParamTree.msnBbTimeWidth);
+  _logf(LOG_DEBUG,"mzdbParamTree.isLossLess = %d\n", mzdbParamTree.isLossless);
+  _logf(LOG_DEBUG,"mzdbParamTree.originFileFormat = %s\n", mzdbParamTree.originFileFormat);
+
+  return rc;
 }
 
 int testGetters(sqlite3 *db, char **errMsg)
@@ -159,63 +144,84 @@ int testGetters(sqlite3 *db, char **errMsg)
   rc = getModelVersion(db, &modelVersion, errMsg);
   if (rc != SQLITE_OK)
     {
-      printf("An error occured trying to return Model Version: '%s'\n", errMsg);
-      exit(2);
+      errMsg = concat(2,"An error occured while trying to load the Model Version: ", errMsg);
+      return rc;
     }
-  else
-    {
-      printf("Model: %s\n\n", modelVersion);
-    }
+  _logf(LOG_DEBUG,"Model: %s", modelVersion);
+
   rc = getPwizMzDbVersion(db, &mzDbVersion, errMsg);
   if (rc != SQLITE_OK)
     {
-      printf("An error occured trying to return PwizMzDbVersion: '%s'\n", errMsg);
-      exit(2);
+      concat(2,"An error occured while trying to load the PwizMzDbVersion: ", errMsg);
+      return rc;
     }
-  else
-    {
-      printf("MzDb Model : %s\n\n", mzDbVersion);
-    }
+  _logf(LOG_DEBUG,"MzDb Model: %s", mzDbVersion);
+
   rc = getLastTime(db, &rt, errMsg);
-  printf("RT: %f\n\n", rt);
+  if (rc != SQLITE_OK) return rc;
+  _logf(LOG_DEBUG,"RT: %f", rt);
+
   rc = getMaxMsLevel(db, &myInt, errMsg);
-  printf("Max Ms Level: %d\n\n", myInt);
+  if (rc != SQLITE_OK) return rc;
+  _logf(LOG_DEBUG,"Max Ms Level: %d", myInt);
+
   rc = getCyclesCount(db, &myInt, errMsg);
-  printf("Cycles Count: %d\n\n", myInt);
+  if (rc != SQLITE_OK) return rc;
+  _logf(LOG_DEBUG,"Cycles Count: %d", myInt);
+
   rc = getSpectraCount(db, 2, &myInt, errMsg);
-  printf("Spectra Count: %d\n\n", myInt);
+  if (rc != SQLITE_OK) return rc;
+  _logf(LOG_DEBUG,"Spectra Count: %d", myInt);
+
   rc = getBoundingBoxesCount(db, 2, &myInt, errMsg);
-  printf("Bounding Boxes Count: %d\n\n", myInt);
+  if (rc != SQLITE_OK) return rc;
+  _logf(LOG_DEBUG,"Bounding Boxes Count: %d", myInt);
+
   rc = getBoundingBoxFirstSpectrumId(db, 500, &myLong, errMsg);
-  printf("Bounding Boxes First Spectrum Id: %d\n\n", myLong);
+  if (rc != SQLITE_OK) return rc;
+  _logf(LOG_DEBUG,"Bounding Boxes First Spectrum Id: %d", myLong);
+
   rc = getBoundingBoxMinMz(db, 2, &myFloat, errMsg);
-  if (rc != SQLITE_OK)
-    {
-      printf("An error occured trying to return Min Mz: '%s'\n", errMsg);
-      exit(2);
-    }
-  else
-    {
-      printf("Bounding Boxes Minimum Mz: %f\n\n", myFloat);
-    }
+  if (rc != SQLITE_OK) return rc;
+  _logf(LOG_DEBUG,"Bounding Boxes Minimum Mz: %f", myFloat);
+
   rc = getBoundingBoxMinTime(db, 150, &myFloat, errMsg);
-  printf("Bounding Boxes Minimum Time: %f\n\n", myFloat);
+  if (rc != SQLITE_OK) return rc;
+  _logf(LOG_DEBUG,"Bounding Boxes Minimum Time: %f", myFloat);
+
   rc = getRunSliceId(db, 13, &myInt, errMsg);
-  printf("Bounding Boxes Run Slice ID: %d\n\n", myInt);
+  if (rc != SQLITE_OK) return rc;
+  _logf(LOG_DEBUG,"Bounding Boxes Run Slice ID: %d", myInt);
+
   rc = getMsLevelFromRunSliceIdManually(db, 10, &myInt, errMsg);
-  printf("Bounding Boxes Ms Level: %d\n\n", myInt);
+  if (rc != SQLITE_OK) return rc;
+  _logf(LOG_DEBUG,"Bounding Boxes Ms Level: %d", myInt);
+
   rc = getTableRecordsCount(db, "run_slice", &myInt, errMsg);
-  printf("Bounding Boxes Table Records Count: %d\n\n", myInt);
+  if (rc != SQLITE_OK) return rc;
+  _logf(LOG_DEBUG,"Bounding Boxes Table Records Count: %d", myInt);
+
   rc = getMzRange(db, 1, &myInt, errMsg);
+  if (rc != SQLITE_OK) return rc;
+
   rc = getBoundingBoxMsLevel(db, 1, &myInt, errMsg);
+  if (rc != SQLITE_OK) return rc;
+
   rc = getBoundingBoxesCountFromSequence(db, &i, *errMsg);
-  printf("getBoundingBoxesCountFromSequence : %d\n", i);
+  if (rc != SQLITE_OK) return rc;
+  _logf(LOG_DEBUG,"getBoundingBoxesCountFromSequence: %d", i);
+
   rc = getDataEncodingsCountFromSequence(db, &i, *errMsg);
-  printf("getDataEncodingsCountFromSequence : %d\n", i);
+  if (rc != SQLITE_OK) return rc;
+  _logf(LOG_DEBUG,"getDataEncodingsCountFromSequence: %d", i);
+
   rc = getSpectraCountFromSequence(db, &i, *errMsg);
-  printf("getSpectraCountFromSequence : %d\n", i);
+  if (rc != SQLITE_OK) return rc;
+  _logf(LOG_DEBUG,"getSpectraCountFromSequence: %d", i);
+
   rc = getRunSlicesCountFromSequence(db, &i, *errMsg);
-  printf("getRunSlicesCountFromSequence : %d\n", i);
+  if (rc != SQLITE_OK) return rc;
+  _logf(LOG_DEBUG,"getRunSlicesCountFromSequence: %d", i);
 }
 
 int testGetData(sqlite3 *db, char **errMsg)

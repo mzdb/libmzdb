@@ -81,9 +81,11 @@ int getMaxMsLevelOrDie(
   sqlite3 *db
   );
 
-int getBoundingBoxesCountFromSequence(sqlite3 *db,
-                                      int *bbCount
-                                      , char *errMsg);
+int getBoundingBoxesCountFromSequence(
+  sqlite3 *db,
+  int *bbCount,
+  char **errMsg
+  );
 
 int getBoundingBoxesCountFromSequenceOrDie(
   sqlite3 *db
@@ -92,8 +94,13 @@ int getBoundingBoxesCountFromSequenceOrDie(
 int getMzRange(
   sqlite3 *db,
   int msLevel,
-  int *minMaxMz,
+  int **minMaxMz,
   char **errMsg
+  );
+
+int *getMzRangeOrDie(
+  sqlite3 *db,
+  int msLevel
   );
 
 int getBoundingBoxesCount(
@@ -108,13 +115,11 @@ int getBoundingBoxesCountOrDie(
   int bbRunSliceId
   );
 
-int getCyclesCount
-(
+int getCyclesCount(
   sqlite3 *db,
   int *cyclesCount,
   char **errMsg
-
-);
+  );
 
 int getCyclesCountOrDie(
   sqlite3 *db
@@ -123,7 +128,7 @@ int getCyclesCountOrDie(
 int getDataEncodingsCountFromSequence(
   sqlite3 *db,
   int *count,
-  char *errMsg
+  char **errMsg
   );
 
 int getDataEncodingsCountFromSequenceOrDie(
@@ -133,20 +138,19 @@ int getDataEncodingsCountFromSequenceOrDie(
 int getSpectraCountFromSequence(
   sqlite3 *db,
   int *spectraCount,
-  char *errMsg
+  char **errMsg
   );
 
 int getSpectraCountFromSequenceOrDie(
   sqlite3 *db
   );
 
-int getSpectraCount
-(
+int getSpectraCount(
   sqlite3 *db,
   int msLevel,
   int *spectraCount,
   char **errMsg
-);
+  );
 
 int getSpectraCountOrDie(
   sqlite3 *db,
@@ -156,7 +160,7 @@ int getSpectraCountOrDie(
 int getRunSlicesCountFromSequence(
   sqlite3 *db,
   int *runSlicesCount,
-  char *errMsg
+  char **errMsg
   );
 
 int getRunSlicesCountFromSequenceOrDie(
@@ -170,28 +174,31 @@ int getTableRecordsCount(
   char **errMsg
   );
 
-int getBoundingBoxData
-(
+int getTableRecordsCountOrDie(
+  sqlite3 *db,
+  char *tableName
+  );
+
+int getBoundingBoxData(
   sqlite3 *db,
   int bbId,
   byte **blob,
   int *blobLength,
   char **errMsg
-);
+  );
 
-void displaySpectraContent64_64(void *blob, int blobLength);
+byte *getBoundingBoxDataOrDie(
+  sqlite3 *db,
+  int bbId,
+  int *blobLength
+  );
 
-void displaySpectraContent64_32(void *blob, int blobLength);
-
-void displaySpectraContent32_32(void *blob, int blobLength);
-
-int getChromatogramDataPoints
-(
+int getChromatogramDataPoints(
   sqlite3 *db,
   int cId,
   byte **data,
   char **errMsg
-);
+  );
 
 byte *getChromatogramDataPointsOrDie
 (
@@ -199,57 +206,63 @@ byte *getChromatogramDataPointsOrDie
   int cId
 );
 
-
+// Create an enumeration of different data encodings
+// TODO: move elsewhere
 typedef void (*DisplaySpectraContentPtr)(void *blob, int blobLength);
+void displaySpectraContent64_64(void *blob, int blobLength);
+void displaySpectraContent64_32(void *blob, int blobLength);
+void displaySpectraContent32_32(void *blob, int blobLength);
 
+// TODO: rename me
 DisplaySpectraContentPtr getDisplaySpectraContent(sqlite3 *db, int dataEncodingId);
 
-long getBoundingBoxFirstSpectrumId
-(
+long getBoundingBoxFirstSpectrumId(
   sqlite3 *db,
   int firstId,
   long *bbFirstSpectrumId,
   char **errMsg
-);
+  );
 
 long getBoundingBoxFirstSpectrumIdOrDie(
   sqlite3 *db,
   int firstId
   );
 
-int getBoundingBoxMinMz
-(
+int getBoundingBoxMinMz(
   sqlite3 *db,
   int bbRtreeId,
   float *bbMinMz,
   char **errMsg
-);
+  );
 
 float getBoundingBoxMinMzOrDie(
   sqlite3 *db,
   int bbRtreeId
   );
 
-int getBoundingBoxMinTime
-(
+int getBoundingBoxMinTime(
   sqlite3 *db,
   int bbRtreeId,
   float *bbMinTime,
   char **errMsg
-);
+  );
 
 float getBoundingBoxMinTimeOrDie(
   sqlite3 *db,
   int bbRtreeId
   );
 
-int getRunSliceId
-(
+int getRunSliceId(
   sqlite3 *db,
   int bbId,
   int *runSliceId,
   char **errMsg
-);
+  );
+
+int getRunSliceIdOrDie(
+  sqlite3 *db,
+  int bbId
+  );
 
 int getMsLevelFromRunSliceIdManually
 (
@@ -259,6 +272,11 @@ int getMsLevelFromRunSliceIdManually
   char **errMsg
 );
 
+int getMsLevelFromRunSliceIdManuallyOrDie(
+  sqlite3 *db,
+  int runSliceId
+  );
+
 int getBoundingBoxMsLevel(
   sqlite3 *db,
   int bbId,
@@ -266,30 +284,21 @@ int getBoundingBoxMsLevel(
   char **errMsg
   );
 
-int getRunSliceIdOrDie(
-  sqlite3 *db,
-  int bbId
-  );
-
-int getMsLevelFromRunSliceIdManuallyOrDie(
-  sqlite3 *db,
-  int runSliceId
-  );
-
-
 int getBoundingBoxMsLevelOrDie(
   sqlite3 *db,
   int bbId
   );
 
-int getTableRecordsCountOrDie(
+int getDataEncodingId(
   sqlite3 *db,
-  char *tableName
+  int boundingBoxId,
+  int *dataEncodingId,
+  char **errMsg
   );
 
-void getMzRangeOrDie(
+int getDataEncodingIdOrDie(
   sqlite3 *db,
-  int msLevel
+  int boundingBoxId
   );
 
 typedef void (*FillPeaksCallbackPtr)(byte *blob, SpectrumData *spectrumData);
@@ -312,19 +321,11 @@ DataPrecision getDataPrecision(sqlite3 *db, int dataEncodingId);
 //Function returning a callback pointer (FillPeaksCallbackPtr) depending on the Data Encoding Id
 FillPeaksCallbackPtr getFillPeaksCallback(DataPrecision dataPrecision);
 
-int getDataEncodingId
-(
-  sqlite3 *db,
-  int boundingBoxId,
-  int *dataEncodingId,
-  char **errMsg
-);
-
 double getXValue(SpectrumData spectrumData, int index);
 
 double getYValue(SpectrumData spectrumData, int index);
 
-
+// TODO: rename me
 int getAllFromBoundingBox(
   sqlite3 *db,
   int boundingBoxId,
@@ -344,15 +345,15 @@ int getSpectrumSlicesInRange(
   char **errMsg
   );
 
-SpectrumSlice *getSpectrumSlicesInRangeOrDie
-(
+SpectrumSlice *getSpectrumSlicesInRangeOrDie(
   sqlite3 *db,
   float minMz,
   float maxMz,
   float minTime,
   float maxTime,
   int msLevel
-);
-#pragma pack(pop)
+  );
+
+#pragma pack(pop) // TODO: comment this pragma
 
 #endif /* QUERIES_H */
