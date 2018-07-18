@@ -15,8 +15,23 @@ typedef struct {
   char *SPECTRUM;
 } MZDB_TABLE_NAMES;
 
-MZDB_TABLES getMzDbTables();
 
-MZDB_TABLE_NAMES getMzDbTableNames();
+/**
+ * @brief get_mzdb_tables get mzdb tables
+ * @return a mzbd tables
+ */
+MZDB_TABLES get_mzdb_tables();
+
+/**
+ * @brief get_mzbd_tables_names get the tables names
+ * @return tables names
+ */
+MZDB_TABLE_NAMES get_mzbd_tables_names();
+
+
+
+//MZDB_TABLES getMzDbTables();
+
+//MZDB_TABLE_NAMES getMzDbTableNames();
 
 #endif /* TABLES_H */
