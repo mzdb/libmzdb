@@ -15,7 +15,7 @@ add_subdirectory(lib/xmlbare)
 include_directories(HEADERS)
 set( MY_SRCS ${SRC_LIST} ${HEADERS})
 
-### Command that must be used instead of add_library to build a .exe file
+## Command that must be used instead of add_library to build a .exe file
 #add_executable(${PROJECT_NAME} ${MY_SRCS} ) # to compile the EXE file
 
 ### Command that must be used instead of add_executable to build a .dll file

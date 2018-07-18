@@ -30,9 +30,6 @@ struct nodec {
   int   z;
 };
 
-typedef struct nodec * nodecPtr;
-typedef struct attc * attcPtr;
-
 struct nodec *nodec_addchildr( struct nodec *self, char *newname, int newnamelen );//, char *newval, int newvallen, int newtype );
 //struct nodec *nodec_addchild( struct nodec *self, char *newname, int newnamelen );
 struct attc *nodec_addattr  ( struct nodec *self, char *newname, int newnamelen );//, char *newval, int newvallen );
