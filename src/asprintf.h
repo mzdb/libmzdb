@@ -19,8 +19,7 @@
  * arguments.
  */
 
-int
-vasprintf (char **, const char *, va_list);
+int vasprintf (char **, const char *, va_list);
 
 /**
  * Sets `char **' pointer to be a buffer
@@ -29,8 +28,7 @@ vasprintf (char **, const char *, va_list);
  * variadic arguments.
  */
 
-int
-asprintf (char **, const char *, ...);
+int asprintf (char **, const char *, ...);
 
 #endif
 #endif

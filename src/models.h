@@ -1,5 +1,3 @@
-
-
 #ifndef MODELS_H
 #define MODELS_H
 #include <stdlib.h>
@@ -11,7 +9,6 @@
 #define LIBMZDB_ACQUISITION_MODE_SRM "SRM (Single reaction monitoring) acquisition"
 #define LIBMZDB_ACQUISITION_MODE_UNKNOWN "unknown acquisition mode"
 
-//???
 #define LIBMZDB_PSI_MS_32_BIT_FLOAT "*0521"
 #define LIBMZDB_PSI_MS_64_BIT_FLOAT "*0523"
 #define LIBMZDB_ACQUISITION_PARAMETER "*1954"
@@ -20,11 +17,9 @@
 #define LIBMZDB_ISOLATION_WINDOW_UPPER_OFFSET "MS:*0829"
 #define SELECTED_ION_MZ "MS:*0744"
 
-
-//TODO
-
 //the acquisition mode
 typedef enum libmzdb_acquisition_mode { DDA, SWATH, MRM, SRM, UNKNOW} libmzdb_acquisition_mode_enum;
+
 //an array of each acquisition mode decription, match with the enumeration
 static char* _libmzdb_acquisition_mode_desc[5] =
 {
@@ -60,13 +55,6 @@ static char * _libmzdb_data_precision_str[5] =
     "DATA_PRECISION_FITTED_64_32"
 };
 #define LIBMZDB_DATA_PRECESION_TO_STRING(_index_) _libmzdb_data_precision_str[_index_];
-
-/*typedef struct data_point
-{
-    float64_t x;
-    float32_t y;
-} data_point_t;*/
-
 
 typedef struct libmzdb_data_point_32_32
 {
@@ -142,8 +130,6 @@ typedef struct libmzdb_mzdb_param_tree
     char* origin_file_format;
 }libmzdb_mzdb_param_tree_t;
 
-//data_encoding.h
-
 typedef enum libmzdb_data_mode { PROFILE = -1, CENTROID = 12, FITTED = 20 } libmzdb_data_mode_t;
 typedef enum libmzdb_peak_encoding { LOW_RES_PEAK = 8, HIGH_RES_PEAK = 12, NO_LOSS_PEAK = 16 } libmzdb_peak_encoding_t;
 typedef enum libmzdb_byte_order { BIG_ENDIAN, LITTLE_ENDIAN } libmzdb_byte_order_t;
@@ -167,16 +153,6 @@ typedef struct libmzdb_data_encodings_cache
     int* spectrum_id_to_data_encoding_id; //[ spectrum_id => data_encoding_id] ; length of MAX(spectrum_id) + 1
     int spectrum_count;
 } libmzdb_data_encodings_cache_t;
-
-//spectrum.h
-/*typedef struct peak
-{
-    double mz;
-    float intensity;
-    float left_hwhm;
-    float right_hwhm;
-} peak_t;*/
-
 
 // pragma usage (specific to MS Compiler):
 // - http://www.cplusplus.com/forum/general/14659/
@@ -220,12 +196,6 @@ typedef struct libmzdb_data_points_64_64
     double* x_list;
     double* y_list;
 } libmzdb_data_points_64_64_t;
-
-
-// TODO: create macro for is_spectrum_data_fitted
-/*int is_spectrum_data_fitted(spectrum_data sd) {
-    return sd != NULL;
-}*/
 
 typedef struct libmzdb_spectrum_data
 {
@@ -279,8 +249,6 @@ typedef struct libmzdb_spectrum
     libmzdb_spectrum_data_t data;
 } libmzdb_spectrum_t;
 
-
-//run_slice.h
 typedef struct libmzdb_spectrum_slice
 {
     libmzdb_spectrum_t spectrum;
@@ -308,9 +276,6 @@ typedef struct libmzdb_run_slice
     libmzdb_run_slice_header_t header;
     libmzdb_run_slice_data_t data;
 } libmzdb_run_slice_t;
-
-
-//bbox.h
 
 typedef struct libmzdb_bbox_sizes
 {
@@ -343,10 +308,8 @@ typedef struct libmzdb_indexed_bounding_box
     int* peaks_counts; // number of peaks in each spectrum slice of the blob
 } libmzdb_indexed_bounding_box_t;
 
-//chromatogram.h
 typedef libmzdb_data_point_64_32_t* libmzdb_chromatogram_t;
 
-//xic_method.h
 typedef enum libmzdb_xic_method { MAX= 0, NEAREST= 1, SUM= 2 } libmzdb_xic_method_enum;
 
 typedef struct libmzdb_isolation_window

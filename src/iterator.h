@@ -5,18 +5,12 @@
 #include "models.h"
 
 #define IT_ERROR -1
-#define IT_DONE 0
 #define IT_OK 0
 #define IT_STEP 1
+#define IT_DONE 2
 
 #define ALL_MS_LEVELS -1
 
-
-///**
-// * @brief memdisp Display the current memory when the function is call
-// * @param msg This message will be displayed before displaying the memory
-// */
-//void libmzdb_memdisp(char* msg);
 
 /**
  * @brief meminit Use to init the memory (FIXME SegFault), will increase the time of process for the next queries
@@ -139,9 +133,10 @@ typedef struct libmzdb_spectrum_iterator
 
     int is_single_ms_level_mode;
 
-} libmzdb_spectrum_iterator_t;
+    int is_iterator_checked; //check if the function has_next/next has been called consecutively
+    int last_has_next_value;
 
-//FIXME: In the process of iterator, there is still some memory leak (few MegaB)
+} libmzdb_spectrum_iterator_t;
 
 /**
  * @brief spectrum_iterator_create Create a spectrum iterator

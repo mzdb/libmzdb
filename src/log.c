@@ -28,11 +28,6 @@ void set_log_file(FILE* file)
 
 char* time_to_str()
 {
-    /*const size_t str_time_size = 256;
-    char* str_time = (char*) malloc(sizeof(char)*str_time_size);
-    time_t now = time(NULL);
-    strftime(str_time, str_time_size, "%c", localtime(&now));*/
-
     char str_time[1024];
     time_t now = time(NULL);
     strftime(str_time, 1024, "%c", localtime(&now));
@@ -89,37 +84,6 @@ int flogf(log_level_enum lvl, const char* msgfmt, ...)
 
   return size;
 }
-
-
-/* OLD IMPLEMENTATIONS
-int flog(log_level_enum lvl, const char* message)
-{
-  // Return if logging level is too low
-  if (lvl <= MIN_LOGGING_LEVEL) return 0;
-
-  ///time_t now;
-  //time(&now);
-  //printf(LOG_TEMPLATE, LOG_LEVELS[lvl], ctime(&now), message);
-
-  char timestr[1000];
-  time_t now = time(NULL);
-  struct tm * p = localtime(&now);
-  strftime(timestr, 1000, "%c", p);
-
-  if (lvl >= LOG_WARN)
-  {
-    return fprintf(stderr,LOG_TEMPLATE, LOG_LEVELS[lvl], timestr, message,"\n");
-  }
-  else
-  {
-    int rc = fprintf(stdout,LOG_TEMPLATE, LOG_LEVELS[lvl], timestr, message,"\n");
-    fflush(stdout); // we have to flush stdout because it is buffered (note that stderr is unbuffered)
-    return rc;
-  }
-}
-
-*/
-
 
 
 

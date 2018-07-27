@@ -16,12 +16,12 @@ include_directories(HEADERS)
 set( MY_SRCS ${SRC_LIST} ${HEADERS})
 
 ## Command that must be used instead of add_library to build a .exe file
-#add_executable(${PROJECT_NAME} ${MY_SRCS} ) # to compile the EXE file
+add_executable(${PROJECT_NAME} ${MY_SRCS} ) # to compile the EXE file
 
 ### Command that must be used instead of add_executable to build a .dll file
-add_library(libmzdb SHARED ${MY_SRCS}) # to compile the DLL file
-include(GenerateExportHeader)
-generate_export_header(libmzdb)
+#add_library(libmzdb SHARED ${MY_SRCS}) # to compile the DLL file
+#include(GenerateExportHeader)
+#generate_export_header(libmzdb)
 
 ### Specify targets for linker
 target_link_libraries(libmzdb sqlite xmlbare)

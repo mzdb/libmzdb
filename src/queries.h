@@ -8,7 +8,6 @@
 #pragma pack(push)
 #pragma pack(1)
 
-
 /**
  * @brief get_model_version return the whole statement to find the model Version
  * @param db the database on which the SQL executes
@@ -121,9 +120,6 @@ int libmzdb_get_max_ms_level(sqlite3* db, int* , char** err_msg);
  */
 int libmzdb_get_max_ms_level_or_die(sqlite3 *db);
 
-
-
-//Uses the method get_table_records_count to specifically return the Table Records Count from the bounding_box table
 /**
  * @brief get_bounding_boxes_count_from_sequence uses the method get_table_records_count to specifically return the Table Records Count from the bounding_box table
  * @param db the database on which the SQL executes
@@ -140,8 +136,6 @@ int libmzdb_get_bounding_boxes_count_from_sequence(sqlite3 *db,int *bb_count,cha
  */
 int libmzdb_get_bounding_boxes_count_from_sequence_or_die(sqlite3 *db);
 
-
-//Return the Mz Range depending on the ms_level
 /**
  * @brief get_mz_range hte mz range depending on the ms level
  * @param db the database on which the SQL executes
@@ -152,7 +146,6 @@ int libmzdb_get_bounding_boxes_count_from_sequence_or_die(sqlite3 *db);
  */
 int libmzdb_get_mz_range(sqlite3 *db, int ms_level,int **min_max_mz,char **err_msg);
 
-//FIXME: check that we return a usable array
 /**
  * @brief get_mz_range_or_die
  * @param db the database on which the SQL executes
@@ -582,86 +575,5 @@ int libmzdb_get_spectrum(sqlite3* db, long spectrum_id, libmzdb_entity_cache_t e
 
 
 
-
-
-
-
-
-
-
-
-//spectrum_t* bbox_to_slices(const indexed_bounding_box_t indexed_bbox, entity_cache_t entity_cache);
-
-///**
-// * @brief fill_peaks64_32_callback Callback for getAllFromBoundingBox. Specific to 64_32 peaks
-// * @param blob
-// * @param spectrum_data
-// */
-//void fill_peaks64_32_callback(byte *blob, spectrum_peaks_t *spectrum_data);
-
-////Not tested!
-///**
-// * @brief fill_peaks64_64_callback Callback for getAllFromBoundingBox. Specific to 64_64 peaks
-// * @param blob
-// * @param spectrum_data
-// */
-//void fill_peaks64_64_callback(byte *blob, spectrum_peaks_t *spectrum_data);
-
-///**
-// * @brief fill_peaks32_32_callback Callback for getAllFromBoundingBox. Specific to 32_32 peaks
-// * @param blob
-// * @param spectrum_data
-// */
-//void fill_peaks32_32_callback(byte *blob, spectrum_peaks_t *spectrum_data);
-
-///**
-// * @brief fill_fitted_peaks64_32_callback Callback for getAllFromBoundingBox. Specific to fitted 64_32 peaks
-// * @param blob
-// * @param spectrum_data
-// */
-//void fill_fitted_peaks64_32_callback(byte *blob, spectrum_peaks_t *spectrum_data);
-
-//typedef void (*fill_peaks_callback_ptr) (byte *blob, spectrum_peaks_t *spectrum_data); //to check !!
-///**
-// * @brief get_fill_peaks_callback Function returning a callback pointer depending on the Data Encoding Id
-// * @param data_precision
-// * @return
-// */
-//fill_peaks_callback_ptr get_fill_peaks_callback(data_precision_enum data_precision);
-
-////
-///**
-// * @brief get_x_value get x value from spectrum_data_t depending of its DATA_PRECISION
-// * @param spectrum_data
-// * @param index
-// * @return
-// */
-//double get_x_value(spectrum_peaks_t spectrum_data, int index);
-
-///**
-// * @brief get_y_value get y value from spectrum_data_t depending of its DATA_PRECISION
-// * @param spectrum_data
-// * @param index
-// * @return
-// */
-//double get_y_value(spectrum_peaks_t spectrum_data, int index);
-
-///**
-// * @brief get_left_hwhm_value get left hwhm value value from spectrum_data_t depending of its DATA_PRECISION (only needed in fitted mode)
-// * @param spectrum_data
-// * @param index
-// * @param data_precision
-// * @return
-// */
-//double get_left_hwhm_value(spectrum_peaks_t spectrum_data, int index, data_precision_enum data_precision);
-
-///**
-// * @brief get_right_hwhm_value get RightHwhmValue value from spectrum_data_t depending of its DATA_PRECISION (only needed in fitted mode)
-// * @param spectrum_data
-// * @param index
-// * @param data_precision
-// * @return
-// */
-//double get_right_hwhm_value(spectrum_peaks_t spectrum_data, int index, data_precision_enum data_precision);
 
 

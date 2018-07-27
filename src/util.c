@@ -20,7 +20,6 @@ char * libmzdb_strdup(const char * str_src)
     return str_dest;
 }
 
-//TODO
 /**
  * @brief strs_concat concatenate n char*
  * @param count the number of char*
@@ -70,12 +69,6 @@ int atob(char* str)
 {
     return strcmp(str, "true") == 0;
 }
-
-/*int _btoi(char* bytes)
-{
-    int out = bytes[0] | ( (int)bytes[1] << 8 ) | ( (int)bytes[2] << 16 ) | ( (int)bytes[3] << 24 );
-    return out;
-}*/
 
 // Source: http://stackoverflow.com/questions/8465006/how-to-concatenate-2-strings-in-c
 const char* concat(int count, ...)
@@ -128,16 +121,3 @@ char *chngChar(char *str, char oldChar, char newChar)
 
     return str;
 }
-
-//duplicates a string with memory allocation
-/*void strmemdup(char** dest, const char *str) {
-    size_t len;
-
-    len = strlen(str) + 1;
-    if (!(*dest = malloc(sizeof(char) * len)))
-        return;
-
-    memcpy(*dest, str, len);
-   }*/
-
-

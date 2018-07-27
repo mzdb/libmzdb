@@ -1,5 +1,3 @@
-//#define _CRT_SECURE_NO_WARNINGS // TODO: comment the define
-
 
 #include <stdio.h>
 #include <string.h>
@@ -303,6 +301,7 @@ byte *libmzdb_get_bounding_box_data_or_die(sqlite3 *db, int bb_id, int *blob_len
     return blob;
 }
 
+//FIXME : It doesn't work
 int libmzdb_get_chromatogram_data_points(sqlite3 *db, int c_id, libmzdb_data_points_32_32_t **data, int *data_points_count, char **err_msg)
 {
     byte* blob = NULL;
@@ -411,7 +410,7 @@ int libmzdb_get_bounding_box_ms_level(sqlite3 *db, int bb_id, int *result_ms_lev
     int *first_result = 0;
     char *z_sql = sqlite3_mprintf("SELECT run_slice_id FROM bounding_box WHERE id = %d", bb_id);
     int rc = libmzdb_execute_select_stmt(db, z_sql, 0, &libmzdb_get_int_cb, (void **) &first_result, err_msg);
-    sqlite3_free(z_sql); //mem leak?
+    sqlite3_free(z_sql);
     if(rc != SQLITE_OK) return rc;
 
     z_sql = sqlite3_mprintf("SELECT ms_level FROM run_slice WHERE run_slice.id = %d", first_result);
@@ -447,8 +446,6 @@ int libmzdb_get_data_encoding_id_or_die(sqlite3 *db, int bounding_box_id)
     return data_encoding_id;
 }
 
-#include "windows.h"
-
 /**
  * @brief _get_data_enconding_count private function : get the number of data encoding
  * @param db the database on which the SQL executes
@@ -465,9 +462,11 @@ int _get_data_enconding_count(sqlite3 *db)
     int count = sqlite3_column_int(stmt, 0);
     sqlite3_finalize(stmt); //delete the stmt*/
 
-    // FIXME: should work
-    /*rc = execute_select_first_field_stmt(db, "SELECT count(id) FROM data_encoding", &get_int_cb, &count, NULL);
-    if (rc!=SQLITE_OK) return -1;*/
+    /* FIXME: should work
+     *
+    rc = execute_select_first_field_stmt(db, "SELECT count(id) FROM data_encoding", &get_int_cb, &count, NULL);
+    if (rc!=SQLITE_OK) return -1;
+    */
 
     return count;
 }
@@ -490,7 +489,7 @@ int get_data_encodings(sqlite3 *db, libmzdb_data_encoding_t **data_encodings, in
 
     libmzdb_data_encoding_t* de = (libmzdb_data_encoding_t*) malloc(sizeof(libmzdb_data_encoding_t)* (*de_count));
 
-    const unsigned char *mode, *byte_order; //*compression => was set and not used
+    const unsigned char *mode, *byte_order;
     int mz_precision, intensity_precision, id;
 
     if ((rc= sqlite3_prepare_v2(db, "SELECT * FROM data_encoding", -1, &stmt, NULL))!=SQLITE_OK) return rc;
@@ -500,7 +499,6 @@ int get_data_encodings(sqlite3 *db, libmzdb_data_encoding_t **data_encodings, in
     {
         id = sqlite3_column_int(stmt, 0);
         mode = sqlite3_column_text(stmt, 1);
-        //compression = sqlite3_column_text(stmt, 2);
         byte_order = sqlite3_column_text(stmt, 3);
         mz_precision = sqlite3_column_int(stmt, 4);
         intensity_precision = sqlite3_column_int(stmt, 5);
@@ -508,14 +506,9 @@ int get_data_encodings(sqlite3 *db, libmzdb_data_encoding_t **data_encodings, in
         index++;
         de[index].id = id;
 
-        //printf("de mode str from loader: %s \n " , mode);
-
         if (strcmp((const char *) mode, "fitted") == 0) de[index].mode = FITTED;
         else if (strcmp((const char *) mode, "centroid") == 0) de[index].mode = CENTROID;
         else de[index].mode = PROFILE;
-
-        //printf("de id from loader: %d \n " , de[index].id);
-        //printf("de mode  from loader: %d \n " , de[index].mode);
 
         de[index].byte_order = (strcmp((const char *) byte_order, "little_endian") == 0) ? LITTLE_ENDIAN : BIG_ENDIAN;
 
@@ -638,10 +631,10 @@ libmzdb_spectrum_data_t* libmzdb_read_spectrum_slice_data(
             switch (pe)
             {
             case LOW_RES_PEAK:
-                memcpy( &mz, &bb_bytes[peak_start_pos], 4); // sizeof(float)
+                memcpy( &mz, &bb_bytes[peak_start_pos], sizeof(float));
                 break;
             default:
-                memcpy( &mz, &bb_bytes[peak_start_pos], 8); // sizeof(double)
+                memcpy( &mz, &bb_bytes[peak_start_pos], sizeof(double));
                 break;
             }
 
@@ -715,7 +708,6 @@ libmzdb_spectrum_data_t* libmzdb_read_spectrum_slice_data(
     }
 
     libmzdb_spectrum_data_t* sd = (libmzdb_spectrum_data_t *) malloc( sizeof(libmzdb_spectrum_data_t) );
-    //sd->data_encoding = (data_encoding_t*) malloc(sizeof(data_encoding_t));
     sd->data_encoding = de;
 
 
@@ -740,6 +732,7 @@ libmzdb_spectrum_data_t* libmzdb_read_spectrum_slice_data(
     }
 
     sd->peak_count = peaks_count;
+
     // return the newly created spectrum data
     return sd;
 }
@@ -769,7 +762,6 @@ libmzdb_spectrum_data_t* libmzdb_read_spectrum_slice_data_at(
 libmzdb_bounding_box_t libmzdb_build_bbox(sqlite3_stmt* stmt, int do_malloc)
 {
     libmzdb_bounding_box_t bbox;
-    //cur_bb.first_spectrum_id = first_spec_id; //first spectrum id
 
     libmzdb_get_int_cb(stmt, 0, 1, &(bbox.id)); //id
     libmzdb_get_int_cb(stmt, 2, 1, &(bbox.run_slice_id)); //run slice id
@@ -950,17 +942,8 @@ int libmzdb_get_spectrum(sqlite3* db, long spectrum_id, libmzdb_entity_cache_t e
                     target_slice_idx = cur_slice_idx;
                     break;
                 }
-        // TODO: add log ERROR
+
         if (target_slice_idx == -1) return -1; //no target slice index has been found => ERROR
-
-        //printf("spectrum_idx=%d\n",target_slice_idx);
-        //printf("spectrum_id=%d\n",spectrum_id);
-
-        /*printf("blob content: ");
-        for (int i=0; i<indexed_bb.bb.blob_size; ++i)
-          printf("%d ",indexed_bb.bb.blob[i]);
-
-        printf("\n");*/
 
         // Add sd to sd_slices
         libmzdb_spectrum_data_t* buffer = libmzdb_read_spectrum_slice_data_at(indexed_bb, de_cache, target_slice_idx, spectrum_id, min_mz, max_mz);
@@ -1037,7 +1020,7 @@ void libmzdb_free_spectrum_header_content(libmzdb_spectrum_header_t spectrum_hea
 void libmzdb_free_spectrum(libmzdb_spectrum_t* spectrum)
 {
     libmzdb_free_spectrum_data_content(spectrum->data);
-    //free_spectrum_header_content(spectrum->header); => spectrum headers are saved in the entity cache
+    //spectrum headers are saved in the entity cache, no need to free them
     free(spectrum);
 }
 
@@ -1046,379 +1029,3 @@ void libmzdb_free_spectrum(libmzdb_spectrum_t* spectrum)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-///**
-// * @brief fill_peaks64_32_callback Callback for getAllFromBoundingBox. Specific to 64_32 peaks
-// * @param blob
-// * @param spectrum_data
-// */
-//void fill_peaks64_32_callback(byte *blob, spectrum_peaks_t *spectrum_data)
-//{
-//    int peak_count;
-//    data_point_64_32_t *peaks64_32 = NULL;
-
-//    spectrum_data->data_precision = DATA_PRECISION_64_32;
-//    peak_count = ((int*)blob)[1];
-
-//    spectrum_data->peak_count = peak_count;
-//    spectrum_data->peaks64_32 = (data_point_64_32_t*) malloc(sizeof(data_point_64_32_t) * peak_count);
-//    peaks64_32 = (data_point_64_32_t*)((int*)blob + 2);
-
-//    memcpy(spectrum_data->peaks64_32, peaks64_32, peak_count);
-//    /*
-//  for (i = 0; i < peak_count; i++)
-//  {
-//    spectrum_data->peaks64_32[i].x = peaks64_32[i].x;
-//    spectrum_data->peaks64_32[i].y = peaks64_32[i].y;
-//  }
-//  */
-//}
-
-////Not tested!
-///**
-// * @brief fill_peaks64_64_callback Callback for getAllFromBoundingBox. Specific to 64_64 peaks
-// * @param blob
-// * @param spectrum_data
-// */
-//void fill_peaks64_64_callback(byte *blob, spectrum_peaks_t *spectrum_data)
-//{
-//    int peak_count;
-//    data_point_64_64_t *peaks64_64 = NULL;
-
-//    spectrum_data->data_precision = DATA_PRECISION_64_64;
-
-//    peak_count = ((int*)blob)[1];
-//    // convert blob to 64_64 peaks
-//    // id = ((int*)blob)[0]); // [unused]
-//    spectrum_data->peak_count = peak_count;
-//    spectrum_data->peaks64_64 = (data_point_64_64_t*)malloc(sizeof(data_point_64_64_t) * peak_count);
-//    peaks64_64 = (data_point_64_64_t*)((int*)blob + 2);
-
-//    memcpy(spectrum_data->peaks64_64, peaks64_64, peak_count);
-//    /*
-//  for (i = 0; i < peak_count; i++)
-//  {
-//    spectrum_data->peaks64_64[i].x = peaks64_64[i].x;
-//    spectrum_data->peaks64_64[i].y = peaks64_64[i].y;
-//  }
-//  */
-//}
-
-///**
-// * @brief fill_peaks32_32_callback Callback for getAllFromBoundingBox. Specific to 32_32 peaks
-// * @param blob
-// * @param spectrum_data
-// */
-//void fill_peaks32_32_callback(byte *blob, spectrum_peaks_t *spectrum_data)
-//{
-//    int peak_count;
-//    data_point_32_32_t *peaks32_32;
-
-//    spectrum_data->data_precision = DATA_PRECISION_32_32;
-//    peak_count = ((int*)blob)[1];
-
-//    spectrum_data->peak_count = peak_count;
-//    spectrum_data->peaks32_32 = (data_point_32_32_t*)malloc(sizeof(data_point_32_32_t) * peak_count);
-//    peaks32_32 = (data_point_32_32_t*)((int*)blob + 2);
-
-//    memcpy(spectrum_data->peaks32_32, peaks32_32, peak_count);
-//    /*
-//  for (i = 0; i < peak_count; i++)
-//  {
-//    spectrum_data->peaks32_32[i].x = peaks32_32[i].x;
-//    spectrum_data->peaks32_32[i].y = peaks32_32[i].y;
-//  }
-//  */
-//}
-
-////Not tested
-////TO DO : more callback for other data_encoding types when they are used
-///**
-// * @brief fill_fitted_peaks64_32_callback Callback for getAllFromBoundingBox. Specific to fitted 64_32 peaks
-// * @param blob
-// * @param spectrum_data
-// */
-//void fill_fitted_peaks64_32_callback(byte *blob, spectrum_peaks_t *spectrum_data)
-//{
-//    int i;
-//    int peak_count;
-//    fitted_peak_t *fitted_peaks;
-
-//    spectrum_data->data_precision = DATA_PRECISION_64_32;
-//    peak_count = ((int*)blob)[1];
-
-//    spectrum_data->peak_count = peak_count;
-//    spectrum_data->fitted_peaks = (fitted_peak_t*) malloc(sizeof(fitted_peak_t) * peak_count);
-//    fitted_peaks = (fitted_peak_t*)((int*)blob + 2);
-
-//    memcpy(spectrum_data->fitted_peaks, fitted_peaks, peak_count);
-//    /*
-//  for (i = 0; i < peak_count; i++)
-//  {
-//    spectrum_data->peaksFitted64_32[i].x = fittedPeaks64_32[i].x;
-//    spectrum_data->peaksFitted64_32[i].y = fittedPeaks64_32[i].y;
-//  }
-//  */
-//}
-
-////return NULL if DataEncoding is not managed
-////TO DO : Create cache to avoid sqlQuerie at each call
-///**
-// * @brief get_fill_peaks_callback Function returning a callback pointer depending on the Data Encoding Id
-// * @param data_precision
-// * @return
-// */
-//fill_peaks_callback_ptr get_fill_peaks_callback(data_precision_enum data_precision)
-//{
-//    switch (data_precision)
-//    {
-//    case DATA_PRECISION_32_32: return fill_peaks32_32_callback;
-//    case DATA_PRECISION_64_32: return fill_peaks64_32_callback;
-//    case DATA_PRECISION_64_64: return fill_peaks64_64_callback;
-//    }
-//    return NULL;
-//}
-
-//int _get_data_point_memory_size(data_precision_enum data_precision)
-//{
-//    switch (data_precision)
-//    {
-//    case DATA_PRECISION_32_32:return sizeof(data_point_32_32_t);
-//    case DATA_PRECISION_64_32:return sizeof(data_point_64_32_t);
-//    case DATA_PRECISION_64_64:return sizeof(data_point_64_64_t);
-//    case DATA_PRECISION_FITTED_64_32:return sizeof(fitted_peak_t);
-//    }
-//    return 0;
-//}
-
-
-//double get_x_value(spectrum_peaks_t spectrum_data, int index)
-//{
-//    switch (spectrum_data.data_precision)
-//    {
-//    case DATA_PRECISION_32_32:return spectrum_data.peaks32_32[index].x;
-//    case DATA_PRECISION_64_32:return spectrum_data.peaks64_32[index].x;
-//    case DATA_PRECISION_64_64:return spectrum_data.peaks64_64[index].x;
-//    }
-//    return 0;
-//}
-
-//double get_y_value(spectrum_peaks_t spectrum_data, int index)
-//{
-//    switch (spectrum_data.data_precision)
-//    {
-//    case DATA_PRECISION_32_32:return spectrum_data.peaks32_32[index].y;
-//    case DATA_PRECISION_64_32:return spectrum_data.peaks64_32[index].y;
-//    case DATA_PRECISION_64_64:return spectrum_data.peaks64_64[index].y;
-//    }
-//    return 0;
-//}
-
-///**
-// * @brief get_left_hwhm_value get left hwhm value value from spectrum_data_t depending of its DATA_PRECISION (only needed in fitted mode)
-// * @param spectrum_data
-// * @param index
-// * @param data_precision
-// * @return
-// */
-//// TODO: private
-//double get_left_hwhm_value(spectrum_peaks_t spectrum_data, int index, data_precision_enum data_precision)
-//{
-//    return (data_precision==DATA_PRECISION_FITTED_64_32) ? spectrum_data.fitted_peaks[index].left_hwhm : 0;
-//}
-
-///**
-// * @brief get_right_hwhm_value get RightHwhmValue value from spectrum_data_t depending of its DATA_PRECISION (only needed in fitted mode)
-// * @param spectrum_data
-// * @param index
-// * @param data_precision
-// * @return
-// */
-//// TODO: private
-//double get_right_hwhm_value(spectrum_peaks_t spectrum_data, int index, data_precision_enum data_precision)
-//{
-//    return (data_precision==DATA_PRECISION_FITTED_64_32) ? spectrum_data.fitted_peaks[index].right_hwhm : 0;
-//}
-
-
-//int get_bounding_box_data_v1(sqlite3 *db, int bb_id, byte **blob, int *blob_length, char **err_msg)
-//{
-//    sqlite3_blob *blob_handle;
-//    int rc;
-//    if ((rc = sqlite3_blob_open(db, "main", "bounding_box", "data", bb_id, 0, &blob_handle)) != SQLITE_OK) return rc;
-
-//    *blob_length = sqlite3_blob_bytes(blob_handle);
-//    *blob = (byte*)calloc(*blob_length, sizeof(byte));
-//    rc = sqlite3_blob_read(blob_handle, *blob, *blob_length, 0);
-//    sqlite3_blob_close(blob_handle);
-//    return rc;
-//}
-
-//int get_data_encoding_id_(sqlite3 *db, int spectrum_id, int *data_encoding_id, char **err_msg)
-//{
-//    char *sql_str_encoding_id = sqlite3_mprintf("SELECT data_encoding_id FROM spectrum WHERE id=%d", spectrum_id);
-//    int rc = execute_select_stmt(db, sql_str_encoding_id, 0, &get_int_cb, data_encoding_id, err_msg);
-//    sqlite3_free(sql_str_encoding_id);
-//    return rc;
-//}
-
-//int get_data_encoding_id_or_die_(sqlite3 *db, int spectrum_id)
-//{
-//    char* err_msg = NULL;
-//    int res;
-//    int rc = get_data_encoding_id(db, spectrum_id, &res, &err_msg);
-//    die_on_sqlite_error(rc, err_msg);
-//    return res;
-//}
-
-//int _get_bbox_count(sqlite3* db, int* bb_count)
-//{
-//    sqlite3_stmt* stmt;
-//    int rc, stmt_step_res;
-
-//    if ((rc= sqlite3_prepare_v2(db, "SELECT count(id) FROM bounding_box", -1, &stmt, NULL))!=SQLITE_OK) return rc;
-//    if ((stmt_step_res= sqlite3_step(stmt))!=SQLITE_ROW) return rc;
-
-//    *bb_count = sqlite3_column_int(stmt, 0);
-//    sqlite3_finalize(stmt); //delete the stmt
-
-//    return rc;
-//}
-
-//indexed_bounding_box_t index_bbox_old(bounding_box_t bbox, data_encodings_cache_t de_cache)
-//{
-//    indexed_bounding_box_t indexed_bb;
-//    _index_each_blob_id(bbox, &indexed_bb, de_cache); //calculate the mapping
-//    return indexed_bb;
-//}
-
-
-
-
-
-
-
-//int _index_each_blob_id(const bounding_box_t bbox, indexed_bounding_box_t *indexed_bbox, const data_encodings_cache_t cache)
-//{
-//    int* spectrum_id_to_data_encoding_id = cache.spectrum_id_to_data_encoding_id;
-//    int estimated_slices_count = 1 + bbox.last_spectrum_id - bbox.first_spectrum_id; //will always be a greater value than the slices count
-
-//    int size_of_array = sizeof(int) * estimated_slices_count;
-//    int* slice_indexes = (int*) malloc(size_of_array);
-//    int* spectra_ids = (int*) malloc(size_of_array);
-//    int* peaks_counts = (int*) malloc(size_of_array);
-
-//    int bytes_idx = 0; //loop index
-//    int peak_size, peak_count, spectrum_id;
-//    int slice_count = 0;
-//    data_encoding_t de;
-
-//    byte* blob = bbox.blob;
-//    // FIXME: avoid this? => see: https://stackoverflow.com/questions/8703047/how-to-convert-a-byte-array-into-double-in-c
-//    int* blob_as_ints = (int*)blob; //use to access to the spectrum id and the peak count, a blob will always be a multiple of 4
-//    int bytes_as_ints_offset = 0;
-//    int blob_size = bbox.blob_size;
-
-//    while (bytes_idx < blob_size) //for each spectrum slice store in the blob
-//    {
-//        spectrum_id = blob_as_ints[bytes_as_ints_offset]; //get the current spectrum id in the blob
-//        spectra_ids[slice_count] = spectrum_id; //stock the spectrum id
-//        peak_count = blob_as_ints[bytes_as_ints_offset + 1]; //get the current peak count in the blob
-//        peaks_counts[slice_count] = peak_count; //stock the peak count
-
-//        int de_id = spectrum_id_to_data_encoding_id[spectrum_id]; //get the data encoding id which match with the spectrum id in the cache
-//        de = *get_data_encoding_from_cache(&cache, de_id); //get the data encoding from the cache with its id
-
-//        peak_size = (de.mode == FITTED) ? de.peak_encoding + 8 : de.peak_encoding; //increase the peak size if the peaks are fitted
-//        slice_indexes[slice_count] = bytes_idx; //store the last byte index
-//        bytes_idx += 8 + (peak_size * peak_count); //shift the byte index with the size (in byte) of the current spectrum slice
-//        bytes_as_ints_offset = (bytes_idx / 4); //convert the byte index into integer index
-//        slice_count++;
-//    }
-
-//    // Set fields of indexed_bbox struct
-//    indexed_bbox->spectrum_slices_count = slice_count;
-//    indexed_bbox->spectra_ids = spectra_ids;
-//    indexed_bbox->slices_indexes = slice_indexes;
-//    indexed_bbox->peaks_counts = peaks_counts;
-//    indexed_bbox->bb = bbox;
-
-//    // return OK
-//    return 0;
-//}
