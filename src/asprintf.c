@@ -14,8 +14,7 @@
 
 #include "asprintf.h"
 
-int
-asprintf (char **str, const char *fmt, ...)
+int asprintf (char **str, const char *fmt, ...)
 {
   int size = 0;
   va_list args;
@@ -32,8 +31,7 @@ asprintf (char **str, const char *fmt, ...)
   return size;
 }
 
-int
-vasprintf (char **str, const char *fmt, va_list args)
+int vasprintf (char **str, const char *fmt, va_list args)
 {
   int size = 0;
   va_list tmpa;

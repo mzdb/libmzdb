@@ -28,10 +28,4 @@ MZDB_TABLES get_mzdb_tables();
  */
 MZDB_TABLE_NAMES get_mzbd_tables_names();
 
-
-
-//MZDB_TABLES getMzDbTables();
-
-//MZDB_TABLE_NAMES getMzDbTableNames();
-
 #endif /* TABLES_H */

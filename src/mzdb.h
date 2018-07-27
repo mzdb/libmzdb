@@ -2,9 +2,6 @@
 #define MZDB_H
 #include "models.h"
 
-//extern static int MZDB_VERBOSE_MODE;
-
-
 /**
  * @brief open_mzdb_file open a mzdb file
  * @param filename the filename
@@ -51,73 +48,4 @@ int libmzdb_get_spectrum_headers(sqlite3* db, libmzdb_spectrum_header_t** spectr
  */
 int libmzdb_create_entity_cache(sqlite3 *db, libmzdb_entity_cache_t** libmzdb_entity_cache, char **err_msg);
 
-
-
-
 #endif
-
-
-
-
-
-
-
-
-
-
-///**
-// * @brief free_user_text free a user text
-// * @param user_text the user text to free
-// */
-//void libmzdb_free_user_text(libmzdb_user_text_t* libmzdb_user_text);
-
-
-///**
-// * @brief free_user_param free a user param
-// * @param user_param the user param to free
-// */
-//void libmzdb_free_user_param(libmzdb_user_param_t* libmzdb_user_param);
-
-///**
-// * @brief free_cv_param free a cv_param
-// * @param cv_param the cv param to free
-// */
-//void libmzdb_free_cv_param(libmzdb_cv_param_t* libmzdb_cv_param);
-
-///**
-// * @brief free_param_tree free a param tree
-// * @param param_tree the param tree to free
-// */
-//void libmzdb_free_param_tree(libmzdb_param_tree_t* libmzdb_param_tree);
-
-
-//int openMzDbFile(
-//  const char *filename,   //Database filename (UTF-8)
-//  sqlite3 **ppDb          //OUT: SQLite db handle
-//);
-
-//int closeMzDbFile(sqlite3* ppDb);
-
-//void freeSpectrumHeader(SpectrumHeader *spectrumHeaderPtr);
-
-//int getSpectrumHeader(sqlite3_stmt *stmt,
-//                      SpectrumHeader *spectrumHeaderPtr,
-//                      char **errMsg
-//);
-
-//int getSpectrumHeaders(
-//        sqlite3 *db,
-//        SpectrumHeader **spectrumHeaders,
-//        char **errMsg
-//);
-
-
-
-
-
-
-
-
-
-
-

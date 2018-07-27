@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
-#include <windows.h>
 
 #include "log.h"
 #include "models.h"
@@ -25,6 +24,7 @@
 
 void print_spectrum(libmzdb_spectrum_t spectrum, void* arg, void* res)
 {
+
     printf("\n#Spectrum : %d --------------------------------------------------------\n\n", spectrum.header.id);
 
     double d_in, d_mz;
@@ -35,9 +35,15 @@ void print_spectrum(libmzdb_spectrum_t spectrum, void* arg, void* res)
         switch (spectrum.data.data_encoding.peak_encoding)
         {
         case HIGH_RES_PEAK:
-            printf("==> HR ");
+            /*printf("==> HR ");
+            libmzdb_spectrum_data_t data = spectrum.data;
+            printf("==> GOT DATA ");
+            float* intensity_array_as_floats = data.intensity_array_as_floats;
+            printf("==> GOT intensity_array_as_floats ");*/
+
             f_in = spectrum.data.intensity_array_as_floats[i];
             d_mz = spectrum.data.mz_array_as_doubles[i];
+                if (spectrum.header.id != 150) return;
 
             printf("\tIntensity : ");
             if (f_in <= -0.5 || isinf(f_in) || f_in > 10e10) printf("FATAL ERROR\t\t\t\t\t\t"); else printf("%f\t\t\t\t\t\t", f_in);
@@ -50,6 +56,7 @@ void print_spectrum(libmzdb_spectrum_t spectrum, void* arg, void* res)
             printf("==> LR ");
             f_in = spectrum.data.intensity_array_as_floats[i];
             f_mz = spectrum.data.mz_array_as_floats[i];
+                if (spectrum.header.id != 150) return;
 
             printf("\tIntensity : ");
             if (f_in <= -0.5 || isinf(f_in)) printf("FATAL ERROR\t\t\t\t\t\t"); else printf("%f\t\t\t\t\t\t", f_in);
@@ -107,22 +114,27 @@ int main(void)
     rc = libmzdb_open_mzdb_file(mzdb_file_path, &db);
 
     libmzdb_entity_cache_t* entity_cache;
-    libmzdb_create_entity_cache(db, &entity_cache, NULL);
 
-    libmzdb_meminit(db);
+    if( libmzdb_create_entity_cache(db, &entity_cache, NULL) != 0) printf("FAILED !\n");
 
-    //    libmzdb_spectrum_t* s2;
-    //    libmzdb_get_spectrum(db, 46, *entity_cache, &s2);
-    //    print_spectrum_id(*s2, NULL, NULL);
+    //libmzdb_meminit(db);
 
     struct data d;
     d.db = db;
     d.entity_c = entity_cache;
 
+    int mslvl = -1;
+
     double start=clock();
-    libmzdb_spectrum_iterator_for_each(db, 1, *entity_cache, &cmp_spectrum, &d, NULL);
+    libmzdb_spectrum_iterator_for_each(db, mslvl, *entity_cache, &print_spectrum, &d, NULL);
     double stop=clock();
-    printf("time at the end : %d s\n",(stop-start)/CLOCKS_PER_SEC);
+    printf("time at the end : %f s\n",(stop-start)/CLOCKS_PER_SEC);
+
+    int spectra_count;
+    if (mslvl == ALL_MS_LEVELS) libmzdb_get_spectra_count_from_sequence(db, &spectra_count, NULL);
+    else libmzdb_get_spectra_count(db, mslvl, &spectra_count, NULL);
+    printf("spectra count ( w/ ms level = %d ) = %d", mslvl, spectra_count);
+
 
     return 0;
 }

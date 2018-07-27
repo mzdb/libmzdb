@@ -11,7 +11,8 @@ typedef enum
   LOG_ERROR,
   NO_LOG
 } log_level_enum;
-extern enum log_level_enum log_level;
+
+log_level_enum log_level;
 
 // Define private global log template
 static const char* LOG_TEMPLATE = "LIBMZDB [%s] - %s - %s\n";
